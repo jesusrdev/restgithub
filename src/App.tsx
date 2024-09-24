@@ -2,6 +2,11 @@ import { useState } from "react";
 import "./App.css";
 import axios from "axios";
 
+import { AgGridReact } from "ag-grid-react";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-material.css";
+import { ColDef, ICellRendererParams } from "ag-grid-community";
+
 type Repository = {
   id: number;
   full_name: string;
@@ -11,6 +16,31 @@ type Repository = {
 function App() {
   const [keyword, setKeyword] = useState("");
   const [repodata, setRepodata] = useState<Repository[]>([]);
+
+  const [columnDefs] = useState<ColDef[]>([
+    { field: "id", sortable: true, filter: true, flex: 1 },
+    { field: "full_name", sortable: true, filter: true, flex: 1 },
+    {
+      field: "html_url",
+      flex: 2,
+      sortable: true,
+      filter: true,
+      cellRenderer: (params: ICellRendererParams) => (
+        <a href={params.value}>{params.value}</a>
+      ),
+    },
+    {
+      headerName: "Actions",
+      field: "full_name",
+      flex: 1,
+      cellRenderer: (params: ICellRendererParams) => (
+        <button onClick={() => alert(params.value)}>Press me</button>
+      ),
+    },
+  ]);
+  const pagination = true;
+  const paginationPageSize = 10;
+  const paginationPageSizeSelector = [10, 25, 50, 100];
 
   const handleClick = async () => {
     try {
@@ -32,23 +62,18 @@ function App() {
         onChange={(e) => setKeyword(e.target.value)}
       />
       <button onClick={handleClick}>Fetch</button>
-
-      {repodata.length === 0 ? (
-        <p>No results found</p>
-      ) : (
-        <table>
-          <tbody>
-            {repodata.map((repo) => (
-              <tr key={repo.id}>
-                <td>{repo.full_name}</td>
-                <td>
-                  <a href={repo.html_url}>{repo.html_url}</a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div
+        className="ag-theme-material-dark"
+        style={{ height: 600, width: 850, marginTop: 20 }}
+      >
+        <AgGridReact
+          rowData={repodata}
+          columnDefs={columnDefs}
+          pagination={pagination}
+          paginationPageSize={paginationPageSize}
+          paginationPageSizeSelector={paginationPageSizeSelector}
+        />
+      </div>
     </>
   );
 }
